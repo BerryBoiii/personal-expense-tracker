@@ -1,8 +1,10 @@
-const CACHE = 'dalasi-tracker-v1';
+const CACHE = 'dalasi-tracker-v3';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './main.js',
+  './style.css'
 ];
 
 self.addEventListener('install', e => {
