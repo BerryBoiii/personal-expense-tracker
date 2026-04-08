@@ -57,9 +57,21 @@
       <!-- Summary Metrics -->
       <div class="summary-grid">
         <div class="metric hi">
-          <div class="metric-label">This month</div>
+          <div class="metric-label">Expenses this month</div>
           <div class="metric-value" id="m-month">D 0</div>
           <div class="metric-sub" id="m-month-sub">0 entries</div>
+        </div>
+
+        <div class="metric credit-border">
+          <div class="metric-label">Income this month</div>
+          <div class="metric-value credit-color" id="m-credit-month">D 0</div>
+          <div class="metric-sub" id="m-credit-month-sub">0 entries</div>
+        </div>
+
+        <div class="metric">
+          <div class="metric-label">Net balance</div>
+          <div class="metric-value" id="m-net">D 0</div>
+          <div class="metric-sub" id="m-net-sub">this month</div>
         </div>
 
         <div class="metric">
@@ -69,7 +81,7 @@
         </div>
 
         <div class="metric">
-          <div class="metric-label">Daily avg</div>
+          <div class="metric-label">Daily avg spend</div>
           <div class="metric-value" id="m-avg">D 0</div>
           <div class="metric-sub" id="m-avg-sub">this month</div>
         </div>
@@ -141,43 +153,86 @@
         </div>
       </div>
 
-      <!-- Add Expense Form -->
-      <div class="card">
-        <div class="card-title">Add expense</div>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Description</label>
-            <input type="text" id="desc" placeholder="e.g. Lunch at market" />
+      <!-- Add Expense & Credit Forms -->
+      <div class="dual-form-grid">
+        <!-- Add Expense Form -->
+        <div class="card">
+          <div class="card-title">Add expense</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Description</label>
+              <input type="text" id="desc" placeholder="e.g. Lunch at market" />
+            </div>
+            <div class="form-group">
+              <label>Amount (D)</label>
+              <input type="number" id="amount" placeholder="0.00" min="0" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="category">
+                <option value="Food">Food &amp; Drink</option>
+                <option value="Transport">Transport</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Health">Health</option>
+                <option value="Bills">Bills &amp; Utilities</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="date" />
+            </div>
           </div>
-          <div class="form-group">
-            <label>Amount (D)</label>
-            <input type="number" id="amount" placeholder="0.00" min="0" step="0.01" />
-          </div>
-          <div class="form-group">
-            <label>Category</label>
-            <select id="category">
-              <option value="Food">Food &amp; Drink</option>
-              <option value="Transport">Transport</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Health">Health</option>
-              <option value="Bills">Bills &amp; Utilities</option>
-              <option value="Entertainment">Entertainment</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" id="date" />
-          </div>
+          <button class="btn-primary" id="add-expense-btn">+ Add expense</button>
         </div>
-        <button class="btn-primary" id="add-expense-btn">+ Add expense</button>
+
+        <!-- Add Credit Form -->
+        <div class="card credit-card-border">
+          <div class="card-title credit-title">Add credit (income)</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Description</label>
+              <input type="text" id="cr-desc" placeholder="e.g. Salary payment" />
+            </div>
+            <div class="form-group">
+              <label>Amount (D)</label>
+              <input type="number" id="cr-amount" placeholder="0.00" min="0" step="0.01" />
+            </div>
+            <div class="form-group">
+              <label>Source</label>
+              <select id="cr-source">
+                <option value="Salary">Salary</option>
+                <option value="Business">Business</option>
+                <option value="Freelance">Freelance</option>
+                <option value="Gift">Gift</option>
+                <option value="Refund">Refund</option>
+                <option value="Investment">Investment</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="cr-date" />
+            </div>
+          </div>
+          <button class="btn-primary btn-credit" id="add-credit-btn">+ Add credit</button>
+        </div>
       </div>
 
-      <!-- Recent Expenses -->
-      <div class="card">
-        <div class="card-title">Recent expenses</div>
-        <div class="expense-list" id="recent-list">
-          <div class="empty">No expenses yet</div>
+      <!-- Recent Expenses & Credits Side by Side -->
+      <div class="dual-list-grid">
+        <div class="card">
+          <div class="card-title">Recent expenses</div>
+          <div class="expense-list" id="recent-list">
+            <div class="empty">No expenses yet</div>
+          </div>
+        </div>
+        <div class="card credit-card-border">
+          <div class="card-title credit-title">Recent credits</div>
+          <div class="expense-list" id="recent-credit-list">
+            <div class="empty">No credits yet</div>
+          </div>
         </div>
       </div>
     </div>
@@ -188,34 +243,65 @@
          ============================================ -->
     <div class="panel" id="panel-history">
 
-      <!-- Filter & Export -->
-      <div class="card">
-        <div class="card-title" style="margin-bottom: 0.75rem">Filter &amp; export</div>
+      <!-- History Type Tabs -->
+      <div class="history-type-tabs">
+        <button class="history-type-tab active" data-history-type="expenses">Expenses</button>
+        <button class="history-type-tab" data-history-type="credits">Credits</button>
+      </div>
 
-        <div class="filter-row">
-          <button class="filter-pill active" data-filter="all">All</button>
-          <button class="filter-pill" data-filter="Food">Food</button>
-          <button class="filter-pill" data-filter="Transport">Transport</button>
-          <button class="filter-pill" data-filter="Shopping">Shopping</button>
-          <button class="filter-pill" data-filter="Health">Health</button>
-          <button class="filter-pill" data-filter="Bills">Bills</button>
-          <button class="filter-pill" data-filter="Entertainment">Entertainment</button>
-          <button class="filter-pill" data-filter="Other">Other</button>
+      <!-- Expense History -->
+      <div class="history-section active" id="history-expenses">
+        <div class="card">
+          <div class="card-title" style="margin-bottom: 0.75rem">Filter &amp; export expenses</div>
+          <div class="filter-row">
+            <button class="filter-pill active" data-filter="all">All</button>
+            <button class="filter-pill" data-filter="Food">Food</button>
+            <button class="filter-pill" data-filter="Transport">Transport</button>
+            <button class="filter-pill" data-filter="Shopping">Shopping</button>
+            <button class="filter-pill" data-filter="Health">Health</button>
+            <button class="filter-pill" data-filter="Bills">Bills</button>
+            <button class="filter-pill" data-filter="Entertainment">Entertainment</button>
+            <button class="filter-pill" data-filter="Other">Other</button>
+          </div>
+          <div class="export-row">
+            <button class="btn-outline" data-export="csv-filtered">CSV (filtered)</button>
+            <button class="btn-outline" data-export="csv-all">CSV (all)</button>
+            <button class="btn-outline" data-export="pdf-filtered">PDF (filtered)</button>
+            <button class="btn-outline" data-export="pdf-all">PDF (all)</button>
+          </div>
         </div>
-
-        <div class="export-row">
-          <button class="btn-outline" data-export="csv-filtered">CSV (filtered)</button>
-          <button class="btn-outline" data-export="csv-all">CSV (all)</button>
-          <button class="btn-outline" data-export="pdf-filtered">PDF (filtered)</button>
-          <button class="btn-outline" data-export="pdf-all">PDF (all)</button>
+        <div class="card">
+          <div class="card-title" id="history-count">All expenses</div>
+          <div class="expense-list" id="history-list">
+            <div class="empty">No expenses yet</div>
+          </div>
         </div>
       </div>
 
-      <!-- Expense List -->
-      <div class="card">
-        <div class="card-title" id="history-count">All expenses</div>
-        <div class="expense-list" id="history-list">
-          <div class="empty">No expenses yet</div>
+      <!-- Credit History -->
+      <div class="history-section" id="history-credits">
+        <div class="card credit-card-border">
+          <div class="card-title credit-title" style="margin-bottom: 0.75rem">Filter &amp; export credits</div>
+          <div class="filter-row">
+            <button class="filter-pill active" data-cr-filter="all">All</button>
+            <button class="filter-pill" data-cr-filter="Salary">Salary</button>
+            <button class="filter-pill" data-cr-filter="Business">Business</button>
+            <button class="filter-pill" data-cr-filter="Freelance">Freelance</button>
+            <button class="filter-pill" data-cr-filter="Gift">Gift</button>
+            <button class="filter-pill" data-cr-filter="Refund">Refund</button>
+            <button class="filter-pill" data-cr-filter="Investment">Investment</button>
+            <button class="filter-pill" data-cr-filter="Other">Other</button>
+          </div>
+          <div class="export-row">
+            <button class="btn-outline" data-cr-export="csv-filtered">CSV (filtered)</button>
+            <button class="btn-outline" data-cr-export="csv-all">CSV (all)</button>
+          </div>
+        </div>
+        <div class="card credit-card-border">
+          <div class="card-title credit-title" id="credit-history-count">All credits</div>
+          <div class="expense-list" id="credit-history-list">
+            <div class="empty">No credits yet</div>
+          </div>
         </div>
       </div>
     </div>
@@ -283,8 +369,9 @@
       <div class="card">
         <div class="card-title">Data management</div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap">
-          <button class="btn-outline" data-export="csv-all">Export CSV</button>
-          <button class="btn-outline" data-export="pdf-all">Export PDF</button>
+          <button class="btn-outline" data-export="csv-all">Export Expenses CSV</button>
+          <button class="btn-outline" data-export="pdf-all">Export Expenses PDF</button>
+          <button class="btn-outline" data-cr-export="csv-all">Export Credits CSV</button>
           <button class="btn-outline" id="import-csv-btn">Import CSV</button>
           <button
             class="btn-outline"

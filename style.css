@@ -11,6 +11,8 @@
   --danger: #f05252;
   --warn: #f0a030;
   --green: #22c55e;
+  --credit: #22c55e;
+  --credit-dim: rgba(34, 197, 94, 0.15);
 }
 
 /* ── Dark Theme ─────────────────────────────── */
@@ -215,7 +217,7 @@ main {
    ============================================ */
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 1rem;
 }
@@ -229,6 +231,7 @@ main {
 }
 
 .metric.hi             { border-color: rgba(79, 138, 255, 0.35); }
+.metric.credit-border  { border-color: rgba(34, 197, 94, 0.35); }
 .metric.danger-border  { border-color: rgba(240, 82, 82, 0.35); }
 .metric.warn-border    { border-color: rgba(240, 160, 48, 0.35); }
 
@@ -809,4 +812,119 @@ main {
   nav            { padding: 0 1rem; }
   .logo          { font-size: 16px; }
   .nav-tab       { padding: 5px 8px; font-size: 11px; }
+  .dual-form-grid { grid-template-columns: 1fr; }
+  .dual-list-grid { grid-template-columns: 1fr; }
+}
+
+
+/* ============================================
+   CREDIT STYLES
+   ============================================ */
+
+/* Green accent color for credit values */
+.credit-color {
+  color: var(--credit) !important;
+}
+
+/* Green border for credit cards */
+.credit-card-border {
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+/* Green title for credit sections */
+.credit-title {
+  color: var(--credit) !important;
+}
+
+/* Credit item row green left-border accent */
+.credit-item {
+  border-left: 3px solid var(--credit);
+}
+
+/* Credit amount green text */
+.credit-amount {
+  color: var(--credit) !important;
+}
+
+/* Green primary button for adding credits */
+.btn-credit {
+  background: var(--credit);
+  color: #fff;
+}
+
+.btn-credit:hover {
+  opacity: 0.88;
+}
+
+/* Dual column grid for forms */
+.dual-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.dual-form-grid .card {
+  margin-bottom: 0;
+}
+
+/* Dual column grid for recent lists */
+.dual-list-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.dual-list-grid .card {
+  margin-bottom: 0;
+}
+
+/* History type tabs */
+.history-type-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 1rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 5px;
+}
+
+.history-type-tab {
+  flex: 1;
+  padding: 9px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.history-type-tab:hover {
+  color: var(--text);
+  background: var(--bg3);
+}
+
+.history-type-tab.active {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.history-type-tab[data-history-type="credits"].active {
+  background: var(--credit);
+}
+
+/* History sections */
+.history-section {
+  display: none;
+}
+
+.history-section.active {
+  display: block;
 }

@@ -11,13 +11,27 @@ const CC = {
   Other:         { t: '#888780', bg: 'var(--co)' }
 };
 
+/* Credit source colors — greenish tones */
+const CRC = {
+  Salary:     { t: '#22c55e', bg: 'rgba(34,197,94,0.15)' },
+  Business:   { t: '#16a34a', bg: 'rgba(22,163,74,0.15)' },
+  Freelance:  { t: '#4ade80', bg: 'rgba(74,222,128,0.15)' },
+  Gift:       { t: '#34d399', bg: 'rgba(52,211,153,0.15)' },
+  Refund:     { t: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+  Investment: { t: '#059669', bg: 'rgba(5,150,105,0.15)' },
+  Other:      { t: '#6ee7b7', bg: 'rgba(110,231,183,0.15)' }
+};
+
 
 /* ============================================
    STATE
    ============================================ */
 let expenses = [];
+let credits = [];
 let budget = 0;
 let activeFilter = 'all';
+let activeCrFilter = 'all';
+let activeHistoryType = 'expenses';
 
 
 /* ============================================
@@ -45,10 +59,12 @@ function toggleTheme() {
 function loadData() {
   try {
     expenses = JSON.parse(localStorage.getItem('dt_expenses') || '[]');
+    credits  = JSON.parse(localStorage.getItem('dt_credits') || '[]');
     budget   = parseFloat(localStorage.getItem('dt_budget') || '0');
     applyTheme(localStorage.getItem('dt_theme') || 'dark');
   } catch (e) {
     expenses = [];
+    credits = [];
     budget = 0;
   }
 }
@@ -56,6 +72,7 @@ function loadData() {
 function saveData() {
   try {
     localStorage.setItem('dt_expenses', JSON.stringify(expenses));
+    localStorage.setItem('dt_credits', JSON.stringify(credits));
     localStorage.setItem('dt_budget', String(budget));
   } catch (e) {}
 }
@@ -123,9 +140,35 @@ function addExpense() {
   render();
 }
 
+function addCredit() {
+  const desc   = document.getElementById('cr-desc').value.trim();
+  const amount = parseFloat(document.getElementById('cr-amount').value);
+  const source = document.getElementById('cr-source').value;
+  const date   = document.getElementById('cr-date').value;
+
+  if (!desc)                    { toast('Enter a description'); return; }
+  if (!amount || amount <= 0)   { toast('Enter a valid amount'); return; }
+  if (!date)                    { toast('Select a date'); return; }
+
+  credits.unshift({ id: Date.now(), desc, amount, source, date });
+  saveData();
+
+  document.getElementById('cr-desc').value = '';
+  document.getElementById('cr-amount').value = '';
+  toast('Credit added!');
+  render();
+}
+
 function deleteExpense(id) {
   if (!confirm('Delete this expense?')) return;
   expenses = expenses.filter(e => e.id !== id);
+  saveData();
+  render();
+}
+
+function deleteCredit(id) {
+  if (!confirm('Delete this credit?')) return;
+  credits = credits.filter(c => c.id !== id);
   saveData();
   render();
 }
@@ -146,6 +189,11 @@ function catPill(cat) {
   return `<span class="cat-pill" style="background:${c.bg};color:${c.t}">${cat}</span>`;
 }
 
+function srcPill(source) {
+  const c = CRC[source] || CRC.Other;
+  return `<span class="cat-pill" style="background:${c.bg};color:${c.t}">${source}</span>`;
+}
+
 function expenseHTML(e) {
   return `
     <div class="expense-item">
@@ -157,6 +205,17 @@ function expenseHTML(e) {
     </div>`;
 }
 
+function creditHTML(c) {
+  return `
+    <div class="expense-item credit-item">
+      ${srcPill(c.source)}
+      <div class="exp-desc">${esc(c.desc)}</div>
+      <div class="exp-date">${c.date}</div>
+      <div class="exp-amount credit-amount">+ ${fmt(c.amount)}</div>
+      <button class="del-btn" data-delete-credit-id="${c.id}" title="Delete">&#x2715;</button>
+    </div>`;
+}
+
 
 /* ============================================
    RENDER — Main Entry
@@ -164,6 +223,7 @@ function expenseHTML(e) {
 function render() {
   renderDashboard();
   renderHistory();
+  renderCreditHistory();
 }
 
 function renderDashboard() {
@@ -176,9 +236,22 @@ function renderDashboard() {
   const dayOfMonth = new Date().getDate();
   const avg = dayOfMonth > 0 ? monthTotal / dayOfMonth : 0;
 
+  /* Credit metrics */
+  const monthCr    = credits.filter(c => c.date.startsWith(month));
+  const crTotal    = monthCr.reduce((s, c) => s + c.amount, 0);
+  const netBalance = crTotal - monthTotal;
+
   /* Summary metrics */
   document.getElementById('m-month').textContent      = fmt(monthTotal);
   document.getElementById('m-month-sub').textContent   = monthExp.length + ' entries';
+  document.getElementById('m-credit-month').textContent = fmt(crTotal);
+  document.getElementById('m-credit-month-sub').textContent = monthCr.length + ' entries';
+
+  const netEl = document.getElementById('m-net');
+  netEl.textContent = (netBalance >= 0 ? '+' : '') + ' ' + fmt(Math.abs(netBalance));
+  netEl.className = 'metric-value' + (netBalance >= 0 ? ' credit-color' : ' danger');
+  document.getElementById('m-net-sub').textContent = netBalance >= 0 ? 'surplus' : 'deficit';
+
   document.getElementById('m-today').textContent       = fmt(todayTotal);
   document.getElementById('m-today-sub').textContent    = todayExp.length + ' entries';
   document.getElementById('m-avg').textContent         = fmtS(avg);
@@ -228,6 +301,12 @@ function renderDashboard() {
   recEl.innerHTML = expenses.length
     ? expenses.slice(0, 5).map(expenseHTML).join('')
     : '<div class="empty">No expenses yet</div>';
+
+  /* Recent credits */
+  const crEl = document.getElementById('recent-credit-list');
+  crEl.innerHTML = credits.length
+    ? credits.slice(0, 5).map(creditHTML).join('')
+    : '<div class="empty">No credits yet</div>';
 }
 
 
@@ -404,6 +483,66 @@ function renderHistory() {
   document.getElementById('history-list').innerHTML = filtered.length
     ? filtered.map(expenseHTML).join('')
     : '<div class="empty">No expenses found</div>';
+}
+
+
+/* ============================================
+   CREDIT HISTORY
+   ============================================ */
+function renderCreditHistory() {
+  const filtered = activeCrFilter === 'all'
+    ? credits
+    : credits.filter(c => c.source === activeCrFilter);
+
+  const total = filtered.reduce((s, c) => s + c.amount, 0);
+  const label = activeCrFilter === 'all' ? 'All' : activeCrFilter;
+
+  document.getElementById('credit-history-count').textContent =
+    label + ' — ' + filtered.length + ' entries · ' + fmt(total);
+
+  document.getElementById('credit-history-list').innerHTML = filtered.length
+    ? filtered.map(creditHTML).join('')
+    : '<div class="empty">No credits found</div>';
+}
+
+function setCrFilter(f, btn) {
+  activeCrFilter = f;
+  document.querySelectorAll('[data-cr-filter]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCreditHistory();
+}
+
+function switchHistoryType(type, btn) {
+  activeHistoryType = type;
+  document.querySelectorAll('.history-type-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.history-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('history-' + type).classList.add('active');
+}
+
+function exportCreditCSV(mode) {
+  const data = mode === 'all'
+    ? credits
+    : (activeCrFilter === 'all' ? credits : credits.filter(c => c.source === activeCrFilter));
+
+  if (!data.length) { toast('No data to export'); return; }
+
+  const rows = [
+    'ID,Date,Description,Source,Amount (D)',
+    ...data.map(c =>
+      `${c.id},${c.date},"${c.desc.replace(/"/g, '""')}",${c.source},${c.amount.toFixed(2)}`
+    )
+  ];
+
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: 'credits-' + todayStr() + '.csv'
+  });
+
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Credits CSV exported!');
 }
 
 
@@ -760,8 +899,9 @@ function handleCSVImport(event) {
 }
 
 function clearAll() {
-  if (!confirm('Delete ALL expenses? Cannot be undone.')) return;
+  if (!confirm('Delete ALL expenses and credits? Cannot be undone.')) return;
   expenses = [];
+  credits = [];
   saveData();
   render();
   toast('All data cleared');
@@ -800,9 +940,22 @@ function bindEvents() {
   /* Add expense */
   document.getElementById('add-expense-btn').addEventListener('click', addExpense);
 
+  /* Add credit */
+  document.getElementById('add-credit-btn').addEventListener('click', addCredit);
+
+  /* History type tabs */
+  document.querySelectorAll('.history-type-tab[data-history-type]').forEach(btn => {
+    btn.addEventListener('click', () => switchHistoryType(btn.dataset.historyType, btn));
+  });
+
   /* Filter pills */
   document.querySelectorAll('.filter-pill[data-filter]').forEach(btn => {
     btn.addEventListener('click', () => setFilter(btn.dataset.filter, btn));
+  });
+
+  /* Credit filter pills */
+  document.querySelectorAll('.filter-pill[data-cr-filter]').forEach(btn => {
+    btn.addEventListener('click', () => setCrFilter(btn.dataset.crFilter, btn));
   });
 
   /* Export buttons */
@@ -813,6 +966,15 @@ function bindEvents() {
       else if (action === 'csv-all') exportCSV('all');
       else if (action === 'pdf-filtered') exportPDF('filtered');
       else if (action === 'pdf-all') exportPDF('all');
+    });
+  });
+
+  /* Credit export buttons */
+  document.querySelectorAll('[data-cr-export]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.crExport;
+      if (action === 'csv-filtered') exportCreditCSV('filtered');
+      else if (action === 'csv-all') exportCreditCSV('all');
     });
   });
 
@@ -834,6 +996,10 @@ function bindEvents() {
     if (delBtn) {
       deleteExpense(Number(delBtn.dataset.deleteId));
     }
+    const delCrBtn = e.target.closest('[data-delete-credit-id]');
+    if (delCrBtn) {
+      deleteCredit(Number(delCrBtn.dataset.deleteCreditId));
+    }
   });
 }
 
@@ -850,6 +1016,7 @@ if (!navigator.onLine) document.getElementById('offline-badge').style.display = 
    INIT
    ============================================ */
 document.getElementById('date').value = todayStr();
+document.getElementById('cr-date').value = todayStr();
 loadData();
 
 if (budget > 0) {
